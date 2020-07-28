@@ -37,8 +37,10 @@ func getDirectory() string {
 
 func getTextFromTerminal() string {
 	consoleReader := bufio.NewReader(os.Stdin)
-	text, _ := consoleReader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
+	text, _ := consoleReader.ReadString('\n')	// Read until new line (pressed enter)
+	text = strings.Replace(text, " ", "", -1)	// Remove whitespace
+	text = strings.TrimSuffix(text, "\n")	// Remove new line at end
+	
 	return text
 }
 //AppendFile - Will write after the end of the last line
@@ -50,12 +52,13 @@ func AppendFile(maintffile string, text string) {
 	len, err := file.WriteString(text)
     check(err)
     fmt.Printf("\nLength: %d bytes", len)
-    fmt.Printf("\nFile Name: %s", file.Name())
+	fmt.Printf("\nFile Name: %s", file.Name())
+	fmt.Printf("\nLocation of %s: %s\n", file.Name(), OriginalDirectory())
 }
 
 func dockerProviderCode(host string) {
 	// Re-writes the old file
-	// TODO: backp the old file if there is any
+	// TODO: backup the old file if there is any
 	text := "provider \"docker\" { \n	host = " + host + " \n}"
 	line1:= []byte(text) 
 	wr.WriteFile("main.tf", line1 , 0666)
@@ -68,6 +71,7 @@ func dockerContainerCode(containers string, originalDir string, mainDir string) 
 	if strings.Contains(containers, ",") { // More than one container
 		containersSplit := strings.Split(containers, ",")
 
+		// TODO: Add basic maintanence header on the docker_containers file that won't be read by the tool
 		b, err := wr.ReadFile("docker_containers.txt")
 			check(err)
 		s := string(b)
@@ -78,8 +82,8 @@ func dockerContainerCode(containers string, originalDir string, mainDir string) 
 			if(strings.Contains(s, containersSplit[i])) {
 				
 				dockerAddContainerImage(containersSplit[i], mainDir)
+				dockerAddContainerMain(containersSplit[i], mainDir)
 			}
-
 		}
 	}else {
 		b, err := wr.ReadFile("docker_containers.txt")
@@ -88,20 +92,27 @@ func dockerContainerCode(containers string, originalDir string, mainDir string) 
 
 		if(strings.Contains(s, containers)) {
 
-		dockerAddContainerImage(containers, mainDir)
-
+		dockerAddContainerImage(containers, mainDir) 
+		dockerAddContainerMain(containers, mainDir)
 		}
 	}
 }
 
 func dockerAddContainerImage(image string, mainDir string) {
 	os.Chdir(mainDir)
-	image = string('"') + image + string('"')
-	text := "\n resource \"docker_image\" " + image + " { \n	name = " + image + " \n} \n" 
+	imageQuote := string('"') + image + string('"')
+	text := "\n resource \"docker_image\" " + imageQuote + " { \n	name = " + imageQuote + " \n} \n" 
 	defer AppendFile("main.tf", text)
 }
 
-func awsProviderCode() { // TODO
+func dockerAddContainerMain(image string, mainDir string) {
+	os.Chdir(mainDir)
+	imageQuote := string('"') + image + string('"')
+	text := "\n resource \"docker_container\" " + imageQuote + " { \n	name = " + imageQuote + " \n	image = docker_image."+ image + " \n }\n" 
+	defer AppendFile("main.tf", text)
+}
+
+func awsProviderCode() { // TODO AWS Code
 	
 }
 
@@ -140,7 +151,6 @@ func main() {
 
 		fmt.Print("What images will you be using? (separate with comma): ")
 		text = getTextFromTerminal()
-		strings.Replace(text, " ", "", -1)
 		dockerContainerCode(text, originalDir, mainDir)
 
 	case "aws":
