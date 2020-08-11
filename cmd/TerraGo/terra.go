@@ -103,7 +103,7 @@ type TerraformFile struct {
 
 // The user input that will determine the main.tf file
 func userInput() TerraformFile {
-	fmt.Printf("What provider will you be using?: ")
+	fmt.Printf("\nWhat provider will you be using?: ")
 	providerUser := GetTextFromTerminal(false)
 
 	fmt.Printf("\nWhat host will you be using?: ")
@@ -155,7 +155,6 @@ func userInput() TerraformFile {
 
 		fmt.Printf("\nWhat name do you want to give to %s?: ", containersSplit[i])
 		containerNames[i] = GetTextFromTerminal(false)
-		//TODO: Throws error, probably because the for loop is not waiting. Think of what to use instead of for
 
 		fmt.Printf("\nWhat image do you want to use for %s?: ", containersSplit[i])
 		containerImages[i] = GetTextFromTerminal(false)
@@ -183,34 +182,42 @@ func userInput() TerraformFile {
 // Creates the main.tf file, needs the tf struct
 func fileCreation(tf TerraformFile, originalDir string, mainDir string) {
 	dockerProviderCode(tf.provider, tf.hostIP)
-	dockerAddNetworkInterface(tf.networkName)
-	dockerContainerCode(tf.containers, tf.name, originalDir, mainDir, tf.networkInterface, tf.networkName, tf.ports)
+	if tf.networkInterface {
+		dockerAddNetworkInterface(tf.networkName)
+	}
+	dockerContainerCode(tf.containers, tf.name, originalDir, mainDir, tf.networkInterface, tf.networkName, tf.ports, tf.image)
+	fmt.Printf("\nMake sure to set-up any environmental variables needed to start using the container(s)!\n")
 }
 
 func dockerProviderCode(provider string, host string) {
-	// Re-writes the old file
-	// TODO: backup the old file if there is any
-	text := "provider " + AddQuotes(provider) + " { \n	host = tcp://" + AddQuotes(host) + " \n}"
-	line1 := []byte(text)
-	wr.WriteFile("main.tf", line1, 0666)
+
+	if _, err := os.Stat("main.tf"); err == nil { // File already exists
+		os.Rename("main.tf", "main.tf.old") // Rename old file
+		//BUG: Deletes contents of old file!
+		text := "provider " + AddQuotes(provider) + " { \n	host = \"tcp://" + host + "\" \n}"
+		line1 := []byte(text)
+		wr.WriteFile("main.tf", line1, 0666) // Write new file
+	} else if os.IsNotExist(err) {
+		text := "provider " + AddQuotes(provider) + " { \n	host = \"tcp://" + host + "\" \n}"
+		line1 := []byte(text)
+		wr.WriteFile("main.tf", line1, 0666)
+	} else { // File may or may not exist. Could be permission issues or something else.
+		fmt.Printf(err.Error())
+	}
+
 }
 
-//TODO: Better structure of creation and export in another go file for visibility
-func dockerContainerCode(containers []string, containerNames []string, originalDir string, mainDir string, network bool, networkName string, ports []string) {
+func dockerContainerCode(containers []string, containerNames []string, originalDir string, mainDir string, network bool, networkName string, ports []string, image []string) {
 
 	os.Chdir(originalDir)
 
-	s := ReadFile("docker_containers.txt")
-
-	// TODO: Some containers may have a different name from their image.
 	for i := 0; i < len(containers); i++ {
 
-		if strings.Contains(s, containers[i]) {
-			port := strings.Split(ports[i], ":")
-			dockerAddContainerMain(containers[i], containerNames[i], mainDir, network, networkName, port[0], port[1])
+		port := strings.Split(ports[i], ":")
 
-			dockerAddContainerImage(containers[i], mainDir)
-		}
+		dockerAddContainerMain(containers[i], image[i], containerNames[i], mainDir, network, networkName, port[0], port[1])
+
+		dockerAddContainerImage(image[i], mainDir)
 	}
 }
 
@@ -224,13 +231,13 @@ func dockerAddContainerImage(image string, mainDir string) {
 	defer AppendFile("main.tf", text)
 }
 
-func dockerAddContainerMain(image string, containerName string, mainDir string, network bool, networkName string, extrP string, intrP string) {
+func dockerAddContainerMain(container string, image string, containerName string, mainDir string, network bool, networkName string, extrP string, intrP string) {
 
 	if OriginalDirectory() != mainDir {
 		os.Chdir(mainDir)
 	}
-
-	text := "\n resource \"docker_container\" " + AddQuotes(image) + " { \n	name = " + AddQuotes(containerName) + " \n	image = docker_image." + image + ".latest \n"
+	//TODO: Add support for specific releases (maybe add option for advanced vs simple setup?)
+	text := "\n resource \"docker_container\" " + AddQuotes(container) + " { \n	name = " + AddQuotes(containerName) + " \n	image = docker_image." + image + ".latest \n"
 	fmt.Printf("\n Writing container block for container: %s!", image)
 	if network {
 		text += "	networks_advanced { \n		name = " + AddQuotes(networkName) + "\n } \n"
@@ -265,9 +272,6 @@ func main() {
 
 	fmt.Println("For help go to: https://github.com/brizinger/TerraGo")
 
-	// TODO: Check if file is there, if file is there, create a main.tf.2
-	// TODO: Check if directory is correct
-	// TODO: Add possibility to also use terraform commands from within
 	originalDir := OriginalDirectory()
 	mainDir := GetDirectory()
 	fmt.Printf("Project Directory: " + mainDir)

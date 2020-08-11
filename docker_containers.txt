@@ -1,4 +1,0 @@
-*<<<ContainerName:ImageName>>>*
-Wordpress:wordpress
-php:php
-mysql:mysql
