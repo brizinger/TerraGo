@@ -1,4 +1,5 @@
 # TerraGo
+![Code Scan](https://github.com/brizinger/TerraGo/workflows/Go/badge.svg?event=push)
 
 TerraGo is a simple Go Tool that can quickly create a terraform file using user input that is ready for testing. It is useful for testing and playing with new images. 
 
