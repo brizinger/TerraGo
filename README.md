@@ -34,5 +34,5 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ### TODO List
 
-- [ ] Fix Box output on terminal
+- [ ] Fix Box output in terminal
 - [ ] Add support for environmental variables
