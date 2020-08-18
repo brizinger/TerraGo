@@ -31,7 +31,7 @@ jobs:
         fi
 
     - name: Build
-      run: cd src/TerraGo/ \ ls \ go build -v .
+      run: cd "src/TerraGo/"; ls; go build -v .
 
     - name: Test
       run: go test -v .
