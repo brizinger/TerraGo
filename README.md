@@ -4,6 +4,12 @@ TerraGo is a simple Go Tool that can quickly create a terraform file using user 
 
 It currently supports only the docker provider.
 
+
+### TODO List
+
+- [ ] Fix Box output in terminal
+- [ ] Add support for environmental variables
+
 ## Installation
 
 Use the run feature of Go to run the tool.
@@ -31,8 +37,3 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## License
 [GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/)
-
-### TODO List
-
-- [ ] Fix Box output in terminal
-- [ ] Add support for environmental variables
