@@ -33,6 +33,9 @@ jobs:
     - name: cd in src
       run: cd src/TerraGo/
     
+    - name: ls
+      run: ls
+    
     - name: Build
       run: go build -v .
 
