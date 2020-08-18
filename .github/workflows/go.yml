@@ -29,15 +29,9 @@ jobs:
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
         fi
-    
-    - name: cd in src
-      run: cd src/TerraGo/
-    
-    - name: ls
-      run: ls
-    
+
     - name: Build
-      run: go build -v .
+      run: cd src/TerraGo/ | ls | go build -v .
 
     - name: Test
       run: go test -v .
