@@ -6,13 +6,21 @@ It currently supports only the docker provider.
 
 ## Installation
 
-Use the run feature of Go to run the tool
+Use the run feature of Go to run the tool.
+
 ```go run src/TerraGo/main.go```
 
-Or run the already builded file
+Or open the already builded file.
+
 ```cd bin/```
-```./main``` If on Linux
-```main``` If on Windows
+
+If on Linux:
+
+```./main``` 
+
+If on Windows: 
+
+```main``` 
 
 ## Usage
 
