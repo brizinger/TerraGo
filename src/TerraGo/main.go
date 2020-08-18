@@ -186,7 +186,8 @@ func fileCreation(tf TerraformFile, originalDir string, mainDir string) {
 		dockerAddNetworkInterface(tf.networkName)
 	}
 	dockerContainerCode(tf.containers, tf.name, originalDir, mainDir, tf.networkInterface, tf.networkName, tf.ports, tf.image)
-	fmt.Printf("\nMake sure to set-up any environmental variables needed to start using the container(s)!\n")
+	//fmt.Printf("\nMake sure to set-up any environmental variables needed to start using the container(s)!\n")
+	fmt.Println(tm.Background(tm.Color(tm.Bold("\nMake sure to set-up any environmental variables needed to start using the container(s)!\n"), tm.GREEN), tm.BLACK))
 }
 
 func dockerProviderCode(provider string, host string) {
@@ -265,7 +266,6 @@ func dockerAddPortsToContainer(ext string, intr string, text string) string {
 }
 
 func main() {
-
 	version := "0.0.1"
 	fmt.Println(tm.Background(tm.Color(tm.Bold("TerraGo"), tm.RED), tm.BLACK))
 	fmt.Println("Version:", version)
@@ -282,11 +282,26 @@ func main() {
 
 	var tf TerraformFile
 	tf = userInput()
-	fmt.Printf("Do you want to create a file with the following settings? (y/n):")
-	fmt.Println(tf)
+
+	table := tm.NewTable(0, 10, 5, ' ', 0)
+	box := tm.NewBox(100|tm.PCT, 5, 0)
+	fmt.Fprintf(table, "Provider\tHost IP\tNetwork\tContainer Name\tImage\tPort\tUses Network?\n")
+	for i := 0; i < len(tf.containers); i++ {
+		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%v\n", tf.provider, tf.hostIP, tf.networkName, tf.name[i], tf.image[i], tf.ports[i], tf.useNetwork[i])
+	}
+	fmt.Fprint(box, table)
+	//tm.Print(tm.MoveTo(box.String(), 1|tm.PCT, 90|tm.PCT))
+	// TODO: Fix the box output
+	tm.Println(table)
+	tm.Flush()
+
+	fmt.Printf("\nDo you want to create a file with the following settings? (y/n):")
 	answer := GetTextFromTerminal(true)
 
 	if answer == "y" {
 		fileCreation(tf, originalDir, mainDir)
+	} else {
+		tm.Clear()
+		main()
 	}
 }
