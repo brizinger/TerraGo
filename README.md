@@ -9,6 +9,7 @@ It currently supports only the Docker provider.
 
 - [ ] Fix Box output in terminal
 - [ ] Add support for environmental variables
+- [ ] Implement command-like calling with flags
 
 ## Installation
 
